@@ -4,11 +4,10 @@
  *
  * Handles plugin uninstallation.
  *
- * @package CiviCRM_Groups_Sync
- * @since 0.1
+ * @package WPCV_CGI
  */
 
-// Kick out if uninstall not called from WordPress.
+// Bail if uninstall not called from WordPress.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit();
 }
@@ -16,7 +15,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 // TODO: This may need to be done for every site in multisite.
 
 // Delete version.
-delete_option( 'civicrm_groups_sync_version' );
+delete_option( 'wpcv_cgi_version' );
 
 // Delete settings.
-delete_option( 'civicrm_groups_sync_settings' );
+delete_option( 'wpcv_cgi_settings' );

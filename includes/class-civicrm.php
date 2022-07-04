@@ -4,8 +4,7 @@
  *
  * Handles CiviCRM-related functionality.
  *
- * @package CiviCRM_Groups_Sync
- * @since 0.1
+ * @package WPCV_CGI
  */
 
 // Exit if accessed directly.
@@ -18,16 +17,25 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 0.1
  */
-class CiviCRM_Groups_Sync_CiviCRM {
+class WPCV_CGI_CiviCRM {
 
 	/**
-	 * Plugin (calling) object.
+	 * Plugin object.
 	 *
 	 * @since 0.1
 	 * @access public
 	 * @var object $plugin The plugin object.
 	 */
 	public $plugin;
+
+	/**
+	 * CiviCRM Permissions object.
+	 *
+	 * @since 1.0.0
+	 * @access public
+	 * @var object $permissions The CiviCRM Permissions object.
+	 */
+	public $permissions;
 
 	/**
 	 * Class constructor.
@@ -41,8 +49,8 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		// Store reference to plugin.
 		$this->plugin = $plugin;
 
-		// Add action for init.
-		add_action( 'civicrm_groups_sync_loaded', [ $this, 'initialise' ] );
+		// Initialise when plugin is loaded.
+		add_action( 'wpcv_cgi/loaded', [ $this, 'initialise' ] );
 
 	}
 
@@ -53,8 +61,41 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 */
 	public function initialise() {
 
-		// Register hooks.
+		// Bootstrap this class.
+		$this->include_files();
+		$this->setup_objects();
 		$this->register_hooks();
+
+		/**
+		 * Broadcast that this class is now loaded.
+		 *
+		 * @since 1.0.0
+		 */
+		do_action( 'wpcv_cgi/civicrm/loaded' );
+
+	}
+
+	/**
+	 * Includes files.
+	 *
+	 * @since 1.0.0
+	 */
+	public function include_files() {
+
+		// Load our class files.
+		require WPCV_CGI_PATH . 'includes/class-civicrm-permissions.php';
+
+	}
+
+	/**
+	 * Sets up objects for this class.
+	 *
+	 * @since 1.0.0
+	 */
+	public function setup_objects() {
+
+		// Instantiate objects.
+		$this->permissions = new WPCV_CGI_CiviCRM_Permissions( $this );
 
 	}
 
@@ -104,7 +145,7 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 */
 	public function register_form_directory( &$config ) {
 
-		// Kick out if no CiviCRM.
+		// Bail if no CiviCRM.
 		if ( ! $this->plugin->is_civicrm_initialised() ) {
 			return;
 		}
@@ -113,7 +154,7 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		$template = CRM_Core_Smarty::singleton();
 
 		// Define our custom path.
-		$custom_path = CIVICRM_GROUPS_SYNC_PATH . 'assets/templates/civicrm';
+		$custom_path = WPCV_CGI_PATH . 'assets/templates/civicrm';
 
 		// Add our custom template directory.
 		$template->addTemplateDir( $custom_path );
@@ -159,15 +200,22 @@ class CiviCRM_Groups_Sync_CiviCRM {
 			// Get the URL.
 			$group_url = $this->plugin->wordpress->group_get_url( $wp_group_id );
 
-			// Add the field element to the form.
-			$form->add( 'html', 'civicrm_groups_sync_edit', __( 'Existing Synced Group', 'civicrm-groups-sync' ) );
+			// Build description.
+			$description = sprintf(
+				/* translators: 1: The opening anchor tag, 2: The closing anchor tag. */
+				__( 'This group is a Synced Group and already has an associated group in WordPress: %1$sGroup Settings%2$s', 'wpcv-civicrm-groups-integration' ),
+				'<a href="' . $group_url . '">',
+				'</a>'
+			);
 
-			// Add URL.
-			$form->assign( 'civicrm_groups_sync_edit_url', $group_url );
+			// Add static content.
+			$form->assign( 'wpcv_cgi_edit_label', __( 'Existing Synced Group', 'wpcv-civicrm-groups-integration' ) );
+			$form->assign( 'wpcv_cgi_edit_url', $group_url );
+			$form->assign( 'wpcv_cgi_edit_description', $description );
 
 			// Insert template block into the page.
 			CRM_Core_Region::instance( 'page-body' )->add( [
-				'template' => 'civicrm-groups-sync-edit.tpl',
+				'template' => 'wpcv-cgi-edit.tpl',
 			] );
 
 		} else {
@@ -175,11 +223,15 @@ class CiviCRM_Groups_Sync_CiviCRM {
 			// It's the New Group form.
 
 			// Add the field element to the form.
-			$form->add( 'checkbox', 'civicrm_groups_sync_create', __( 'Create Synced Group', 'civicrm-groups-sync' ) );
+			$form->add( 'checkbox', 'wpcv_cgi_create', __( 'Create Synced Group', 'wpcv-civicrm-groups-integration' ) );
+
+			// Add static content.
+			$form->assign( 'wpcv_cgi_create_label', __( 'Create Synced Group', 'wpcv-civicrm-groups-integration' ) );
+			$form->assign( 'wpcv_cgi_create_description', __( 'If you are creating a Synced Group, you only need to fill out the "Title" field (and optionally the "Description" field) above. The Group Type will be set to "Access Control" automatically.', 'wpcv-civicrm-groups-integration' ) );
 
 			// Insert template block into the page.
 			CRM_Core_Region::instance( 'page-body' )->add( [
-				'template' => 'civicrm-groups-sync-create.tpl',
+				'template' => 'wpcv-cgi-create.tpl',
 			] );
 
 		}
@@ -201,7 +253,7 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 */
 	public function form_group_create_process( $formName, &$form ) {
 
-		// Kick out if not Edit Group form.
+		// Bail if not Edit Group form.
 		if ( ! ( $form instanceof CRM_Group_Form_Edit ) ) {
 			return;
 		}
@@ -210,10 +262,10 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		$values = $form->getVar( '_submitValues' );
 
 		// Was our checkbox ticked?
-		if ( ! isset( $values['civicrm_groups_sync_create'] ) ) {
+		if ( ! isset( $values['wpcv_cgi_create'] ) ) {
 			return;
 		}
-		if ( $values['civicrm_groups_sync_create'] != '1' ) {
+		if ( $values['wpcv_cgi_create'] != '1' ) {
 			return;
 		}
 
@@ -249,10 +301,10 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		}
 
 		// Was our checkbox ticked?
-		if ( ! isset( $civicrm_group['civicrm_groups_sync_create'] ) ) {
+		if ( ! isset( $civicrm_group['wpcv_cgi_create'] ) ) {
 			return;
 		}
-		if ( 1 !== (int) $civicrm_group['civicrm_groups_sync_create'] ) {
+		if ( 1 !== (int) $civicrm_group['wpcv_cgi_create'] ) {
 			return;
 		}
 
@@ -494,7 +546,7 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 */
 	public function group_get_url( $group_id ) {
 
-		// Kick out if no CiviCRM.
+		// Bail if no CiviCRM.
 		if ( ! $this->plugin->is_civicrm_initialised() ) {
 			return '';
 		}
@@ -503,15 +555,25 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		$group_url = CRM_Utils_System::url( 'civicrm/group', 'reset=1&action=update&id=' . $group_id );
 
 		/**
-		 * Filter the URL of the CiviCRM Group's admin page.
+		 * Filters the URL of the CiviCRM Group's admin page.
 		 *
-		 * @since 0.1.1
+		 * @since 1.0.0
 		 *
 		 * @param str $group_url The existing URL.
 		 * @param int $group_id The numeric ID of the CiviCRM Group.
-		 * @return str $group_url The modified URL.
 		 */
-		return apply_filters( 'civicrm_groups_sync_group_get_url_civi', $group_url, $group_id );
+		$group_url = apply_filters( 'wpcv_cgi/civicrm/group_url', $group_url, $group_id );
+
+		/**
+		 * Filter the URL of the CiviCRM Group's admin page.
+		 *
+		 * @since 0.1.1
+		 * @deprecated 1.0.0 Use the {@see 'wpcv_cgi/civicrm/group_url'} filter instead.
+		 *
+		 * @param str $group_url The existing URL.
+		 * @param int $group_id The numeric ID of the CiviCRM Group.
+		 */
+		return apply_filters_deprecated( 'civicrm_groups_sync_group_get_url_civi', [ $group_url, $group_id ], '1.0.0', 'wpcv_cgi/civicrm/group_url' );
 
 	}
 
@@ -676,6 +738,11 @@ class CiviCRM_Groups_Sync_CiviCRM {
 			return false;
 		}
 
+		// Bail if no CiviCRM.
+		if ( ! $this->plugin->is_civicrm_initialised() ) {
+			return false;
+		}
+
 		// Remove hooks.
 		remove_action( 'civicrm_pre', [ $this, 'group_created_pre' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'group_created_post' ], 10 );
@@ -727,6 +794,11 @@ class CiviCRM_Groups_Sync_CiviCRM {
 
 		// Sanity check.
 		if ( ! is_object( $wp_group ) ) {
+			return false;
+		}
+
+		// Bail if no CiviCRM.
+		if ( ! $this->plugin->is_civicrm_initialised() ) {
 			return false;
 		}
 
@@ -784,6 +856,11 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 */
 	public function group_delete_by_wp_id( $wp_group_id ) {
 
+		// Bail if no CiviCRM.
+		if ( ! $this->plugin->is_civicrm_initialised() ) {
+			return false;
+		}
+
 		// Get the synced CiviCRM Group.
 		$civicrm_group = $this->group_get_by_wp_id( $wp_group_id );
 
@@ -834,6 +911,11 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 */
 	public function group_contact_create( $civicrm_group_id, $civicrm_contact_id ) {
 
+		// Bail if no CiviCRM.
+		if ( ! $this->plugin->is_civicrm_initialised() ) {
+			return false;
+		}
+
 		// Remove hook.
 		remove_action( 'civicrm_pre', [ $this, 'group_contacts_added' ], 10 );
 
@@ -879,6 +961,11 @@ class CiviCRM_Groups_Sync_CiviCRM {
 	 * @return array|bool $result The array of GroupContact data, or false on failure.
 	 */
 	public function group_contact_delete( $civicrm_group_id, $civicrm_contact_id ) {
+
+		// Bail if no CiviCRM.
+		if ( ! $this->plugin->is_civicrm_initialised() ) {
+			return false;
+		}
 
 		// Remove hook.
 		remove_action( 'civicrm_pre', [ $this, 'group_contacts_deleted' ], 10 );
@@ -1091,18 +1178,28 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		}
 
 		/**
-		 * Filter the result of the CiviCRM Contact lookup.
+		 * Filters the result of the CiviCRM Contact lookup.
 		 *
 		 * You can use this filter to create a CiviCRM Contact if none is found.
 		 * Return the new CiviCRM Contact ID and the Group linkage will be made.
 		 *
-		 * @since 0.1
+		 * @since 1.0.0
 		 *
 		 * @param int|bool $contact_id The numeric ID of the CiviCRM Contact, or false on failure.
 		 * @param int $user_id The numeric ID of the WordPress User.
-		 * @return int|bool $contact_id The numeric ID of the CiviCRM Contact, or false on failure.
 		 */
-		$contact_id = apply_filters( 'civicrm_groups_sync_contact_id_get_by_user_id', $contact_id, $user_id );
+		$contact_id = apply_filters( 'wpcv_cgi/civicrm/contact_id', $contact_id, $user_id );
+
+		/**
+		 * Filter the result of the CiviCRM Contact lookup.
+		 *
+		 * @since 0.1
+		 * @deprecated 1.0.0 Use the {@see 'wpcv_cgi/civicrm/contact_id'} filter instead.
+		 *
+		 * @param int|bool $contact_id The numeric ID of the CiviCRM Contact, or false on failure.
+		 * @param int $user_id The numeric ID of the WordPress User.
+		 */
+		$contact_id = apply_filters_deprecated( 'civicrm_groups_sync_contact_id_get_by_user_id', [ $contact_id, $user_id ], '1.0.0', 'wpcv_cgi/civicrm/contact_id' );
 
 		// --<
 		return $contact_id;
@@ -1122,14 +1219,14 @@ class CiviCRM_Groups_Sync_CiviCRM {
 		// Init return.
 		$contact = false;
 
-		// Get the Contact ID.
-		$contact_id = $this->contact_id_get_by_user_id( $user_id );
-		if ( empty( $contact_id ) ) {
+		// Try and init CiviCRM.
+		if ( ! $this->plugin->is_civicrm_initialised() ) {
 			return $contact;
 		}
 
-		// Try and init CiviCRM.
-		if ( ! $this->plugin->is_civicrm_initialised() ) {
+		// Get the Contact ID.
+		$contact_id = $this->contact_id_get_by_user_id( $user_id );
+		if ( empty( $contact_id ) ) {
 			return $contact;
 		}
 

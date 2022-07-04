@@ -4,8 +4,7 @@
  *
  * Handles WordPress-related functionality.
  *
- * @package CiviCRM_Groups_Sync
- * @since 0.1
+ * @package WPCV_CGI
  */
 
 // Exit if accessed directly.
@@ -19,10 +18,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 0.1
  */
-class CiviCRM_Groups_Sync_WordPress {
+class WPCV_CGI_WordPress {
 
 	/**
-	 * Plugin (calling) object.
+	 * Plugin object.
 	 *
 	 * @since 0.1
 	 * @access public
@@ -42,8 +41,8 @@ class CiviCRM_Groups_Sync_WordPress {
 		// Store reference to plugin.
 		$this->plugin = $plugin;
 
-		// Add action for init.
-		add_action( 'civicrm_groups_sync_loaded', [ $this, 'initialise' ] );
+		// Initialise when plugin is loaded.
+		add_action( 'wpcv_cgi/loaded', [ $this, 'initialise' ] );
 
 	}
 
@@ -247,12 +246,12 @@ class CiviCRM_Groups_Sync_WordPress {
 		// Construct minimum "Groups" Group params.
 		if ( is_object( $civicrm_group ) ) {
 			$params = [
-				'name' => isset( $civicrm_group->title ) ? $civicrm_group->title : __( 'Untitled', 'civicrm-groups-sync' ),
+				'name' => isset( $civicrm_group->title ) ? $civicrm_group->title : __( 'Untitled', 'wpcv-civicrm-groups-integration' ),
 				'description' => isset( $civicrm_group->description ) ? $civicrm_group->description : '',
 			];
 		} else {
 			$params = [
-				'name' => isset( $civicrm_group['title'] ) ? $civicrm_group['title'] : __( 'Untitled', 'civicrm-groups-sync' ),
+				'name' => isset( $civicrm_group['title'] ) ? $civicrm_group['title'] : __( 'Untitled', 'wpcv-civicrm-groups-integration' ),
 				'description' => isset( $civicrm_group['description'] ) ? $civicrm_group['description'] : '',
 			];
 		}
@@ -280,7 +279,7 @@ class CiviCRM_Groups_Sync_WordPress {
 
 			// Init params.
 			$params = [
-				'name' => isset( $civicrm_group->title ) ? $civicrm_group->title : __( 'Untitled', 'civicrm-groups-sync' ),
+				'name' => isset( $civicrm_group->title ) ? $civicrm_group->title : __( 'Untitled', 'wpcv-civicrm-groups-integration' ),
 				'description' => isset( $civicrm_group->description ) ? $civicrm_group->description : '',
 			];
 
@@ -291,7 +290,7 @@ class CiviCRM_Groups_Sync_WordPress {
 
 			// Init params.
 			$params = [
-				'name' => isset( $civicrm_group['title'] ) ? $civicrm_group['title'] : __( 'Untitled', 'civicrm-groups-sync' ),
+				'name' => isset( $civicrm_group['title'] ) ? $civicrm_group['title'] : __( 'Untitled', 'wpcv-civicrm-groups-integration' ),
 				'description' => isset( $civicrm_group['description'] ) ? $civicrm_group['description'] : '',
 			];
 
@@ -367,15 +366,25 @@ class CiviCRM_Groups_Sync_WordPress {
 		$group_url = admin_url( 'admin.php?page=groups-admin&group_id=' . $group_id . '&action=edit' );
 
 		/**
-		 * Filter the URL of the "Groups" Group's admin page.
+		 * Filters the URL of the "Groups" Group's admin page.
 		 *
-		 * @since 0.1.1
+		 * @since 1.0.0
 		 *
 		 * @param str $group_url The existing URL.
 		 * @param int $group_id The numeric ID of the CiviCRM Group.
-		 * @return str $group_url The modified URL.
 		 */
-		return apply_filters( 'civicrm_groups_sync_group_get_url_wp', $group_url, $group_id );
+		$group_url = apply_filters( 'wpcv_cgi/wp/group_url', $group_url, $group_id );
+
+		/**
+		 * Filter the URL of the "Groups" Group's admin page.
+		 *
+		 * @since 0.1.1
+		 * @deprecated 1.0.0 Use the {@see 'wpcv_cgi/page_settings/cap'} filter instead.
+		 *
+		 * @param str $group_url The existing URL.
+		 * @param int $group_id The numeric ID of the CiviCRM Group.
+		 */
+		return apply_filters_deprecated( 'civicrm_groups_sync_group_get_url_wp', [ $group_url, $group_id ], '1.0.0', 'wpcv_cgi/wp/group_url' );
 
 	}
 
@@ -451,7 +460,7 @@ class CiviCRM_Groups_Sync_WordPress {
 		ob_start();
 
 		// Include template.
-		include CIVICRM_GROUPS_SYNC_PATH . 'assets/templates/admin/settings-groups-create.php';
+		include WPCV_CGI_PATH . 'assets/templates/admin/settings-groups-create.php';
 
 		// Save the output and flush the buffer.
 		$field = ob_get_clean();
@@ -490,7 +499,7 @@ class CiviCRM_Groups_Sync_WordPress {
 		ob_start();
 
 		// Include template.
-		include CIVICRM_GROUPS_SYNC_PATH . 'assets/templates/admin/settings-groups-edit.php';
+		include WPCV_CGI_PATH . 'assets/templates/admin/settings-groups-edit.php';
 
 		// Save the output and flush the buffer.
 		$field = ob_get_clean();
@@ -587,7 +596,7 @@ class CiviCRM_Groups_Sync_WordPress {
 			$trace = $e->getTraceAsString();
 			$this->plugin->log_error( [
 				'method' => __METHOD__,
-				'message' => __( 'Could not add User to Group.', 'civicrm-groups-sync' ),
+				'message' => __( 'Could not add User to Group.', 'wpcv-civicrm-groups-integration' ),
 				'user_id' => $user_id,
 				'group_id' => $group_id,
 				'backtrace' => $trace,
@@ -630,7 +639,7 @@ class CiviCRM_Groups_Sync_WordPress {
 			$trace = $e->getTraceAsString();
 			$this->plugin->log_error( [
 				'method' => __METHOD__,
-				'message' => __( 'Could not delete User from Group.', 'civicrm-groups-sync' ),
+				'message' => __( 'Could not delete User from Group.', 'wpcv-civicrm-groups-integration' ),
 				'user_id' => $user_id,
 				'group_id' => $group_id,
 				'backtrace' => $trace,
@@ -735,18 +744,31 @@ class CiviCRM_Groups_Sync_WordPress {
 		}
 
 		/**
+		 * Filters the result of the WordPress User lookup.
+		 *
+		 * You can use this filter to create a WordPress User if none is found.
+		 * Return the new WordPress User ID and the Group linkage will be made.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int|bool $user_id The numeric ID of the WordPress User, or false on failure.
+		 * @param int $contact_id The numeric ID of the CiviCRM Contact.
+		 */
+		$user_id = apply_filters( 'wpcv_cgi/wp/user_id', $user_id, $contact_id );
+
+		/**
 		 * Filter the result of the WordPress User lookup.
 		 *
 		 * You can use this filter to create a WordPress User if none is found.
 		 * Return the new WordPress User ID and the Group linkage will be made.
 		 *
 		 * @since 0.1
+		 * @deprecated 1.0.0 Use the {@see 'wpcv_cgi/wp/user_id'} filter instead.
 		 *
 		 * @param int|bool $user_id The numeric ID of the WordPress User, or false on failure.
 		 * @param int $contact_id The numeric ID of the CiviCRM Contact.
-		 * @return int|bool $user_id The numeric ID of the WordPress User, or false on failure.
 		 */
-		$user_id = apply_filters( 'civicrm_groups_sync_user_id_get_by_contact_id', $user_id, $contact_id );
+		$user_id = apply_filters_deprecated( 'civicrm_groups_sync_user_id_get_by_contact_id', [ $user_id, $contact_id ], '1.0.0', 'wpcv_cgi/wp/user_id' );
 
 		// --<
 		return $user_id;

@@ -4,8 +4,7 @@
  *
  * Handles markup for the Edit Group screen.
  *
- * @package CiviCRM_Groups_Sync
- * @since 0.1
+ * @package WPCV_CGI
  */
 
 // Exit if accessed directly.
@@ -18,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 
 	echo sprintf(
 		/* translators: %s: The URL of the Group. */
-		__( 'There is <a href="%s">an existing CiviCRM Group</a> that is linked to this Group. The Group Members will exist in both Groups.', 'civicrm-groups-sync' ),
+		__( 'There is <a href="%s">an existing CiviCRM Group</a> that is linked to this Group. The Group Members will exist in both Groups.', 'wpcv-civicrm-groups-integration' ),
 		$group_url
 	);
 

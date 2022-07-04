@@ -4,8 +4,7 @@
  *
  * Handles admin functionality.
  *
- * @package CiviCRM_Groups_Sync
- * @since 0.1
+ * @package WPCV_CGI
  */
 
 // Exit if accessed directly.
@@ -18,10 +17,10 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 0.1
  */
-class CiviCRM_Groups_Sync_Admin {
+class WPCV_CGI_Admin {
 
 	/**
-	 * Plugin (calling) object.
+	 * Plugin object.
 	 *
 	 * @since 0.1
 	 * @access public
@@ -78,7 +77,7 @@ class CiviCRM_Groups_Sync_Admin {
 		$this->plugin = $plugin;
 
 		// Add action for init.
-		add_action( 'civicrm_groups_sync_loaded', [ $this, 'initialise' ] );
+		add_action( 'wpcv_cgi/loaded', [ $this, 'initialise' ] );
 
 	}
 
@@ -90,18 +89,18 @@ class CiviCRM_Groups_Sync_Admin {
 	public function initialise() {
 
 		// Load plugin version.
-		$this->plugin_version = $this->option_get( 'civicrm_groups_sync_version', 'none' );
+		$this->plugin_version = $this->option_get( 'wpcv_cgi_version', 'none' );
 
 		// Perform any upgrade tasks.
 		$this->upgrade_tasks();
 
 		// Upgrade version if needed.
-		if ( $this->plugin_version != CIVICRM_GROUPS_SYNC_VERSION ) {
+		if ( $this->plugin_version != WPCV_CGI_VERSION ) {
 			$this->store_version();
 		}
 
 		// Load settings array.
-		$this->settings = $this->option_get( 'civicrm_groups_sync_settings', $this->settings );
+		$this->settings = $this->option_get( 'wpcv_cgi_settings', $this->settings );
 
 		// Upgrade settings.
 		$this->upgrade_settings();
@@ -120,10 +119,15 @@ class CiviCRM_Groups_Sync_Admin {
 
 		/*
 		// For upgrades by version, use something like the following.
-		if ( version_compare( CIVICRM_GROUPS_SYNC_VERSION, '0.3.4', '>=' ) ) {
+		if ( version_compare( WPCV_CGI_VERSION, '0.3.4', '>=' ) ) {
 			// Do something
 		}
 		*/
+
+		// Always sync capabilities on plugin upgrade.
+		if ( $this->plugin_version != WPCV_CGI_VERSION ) {
+			$this->plugin->civicrm->permissions->capabilities_sync_queue();
+		}
 
 	}
 
@@ -164,7 +168,7 @@ class CiviCRM_Groups_Sync_Admin {
 	public function store_version() {
 
 		// Store version.
-		$this->option_set( 'civicrm_groups_sync_version', CIVICRM_GROUPS_SYNC_VERSION );
+		$this->option_set( 'wpcv_cgi_version', WPCV_CGI_VERSION );
 
 	}
 
@@ -175,9 +179,10 @@ class CiviCRM_Groups_Sync_Admin {
 	 */
 	public function register_hooks() {
 
+		/*
 		// Add admin page to Settings menu.
-		// phpcs:ignore Squiz.Commenting.InlineComment.InvalidEndChar
-		//add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
+		*/
 
 	}
 
@@ -191,14 +196,13 @@ class CiviCRM_Groups_Sync_Admin {
 	public function admin_menu() {
 
 		/**
-		 * Set capability but allow overrides.
+		 * Filters the default capability for accessing the admin menu.
 		 *
-		 * @since 0.1
+		 * @since 1.0.0
 		 *
-		 * @param str The default capability for access to settings page.
-		 * @return str The modified capability for access to settings page.
+		 * @param str $capability The default capability for access to settings page.
 		 */
-		$capability = apply_filters( 'civicrm_groups_sync_page_settings_cap', 'manage_options' );
+		$capability = apply_filters( 'wpcv_cgi/page_settings/cap', 'manage_options' );
 
 		// Check User permissions.
 		if ( ! current_user_can( $capability ) ) {
@@ -207,27 +211,28 @@ class CiviCRM_Groups_Sync_Admin {
 
 		// Add the admin page to the Settings menu.
 		$this->parent_page = add_options_page(
-			__( 'CiviCRM Groups Sync: Settings', 'civicrm-groups-sync' ),
-			__( 'CiviCRM Groups Sync', 'civicrm-groups-sync' ),
+			__( 'Integrate CiviCRM with Groups: Settings', 'wpcv-civicrm-groups-integration' ),
+			__( 'Integrate CiviCRM with Groups', 'wpcv-civicrm-groups-integration' ),
 			$capability,
-			'civicrm_groups_sync_parent',
+			'wpcv_cgi_parent',
 			[ $this, 'page_settings' ]
 		);
 
 		// Add help text.
 		add_action( 'admin_head-' . $this->parent_page, [ $this, 'admin_head' ], 50 );
 
+		/*
 		// Add scripts and styles.
-		// phpcs:ignore Squiz.Commenting.InlineComment.InvalidEndChar
-		//add_action( 'admin_print_styles-' . $this->parent_page, array( $this, 'admin_css' ) );
+		add_action( 'admin_print_styles-' . $this->parent_page, array( $this, 'admin_css' ) );
+		*/
 
 		// Add settings page.
 		$this->settings_page = add_submenu_page(
-			'civicrm_groups_sync_parent', // Parent slug.
-			__( 'CiviCRM Groups Sync: Settings', 'civicrm-groups-sync' ), // Page title.
-			__( 'Settings', 'civicrm-groups-sync' ), // Menu title.
+			'wpcv_cgi_parent', // Parent slug.
+			__( 'Integrate CiviCRM with Groups: Settings', 'wpcv-civicrm-groups-integration' ), // Page title.
+			__( 'Settings', 'wpcv-civicrm-groups-integration' ), // Menu title.
 			$capability, // Required caps.
-			'civicrm_groups_sync_settings', // Slug name.
+			'wpcv_cgi_settings', // Slug name.
 			[ $this, 'page_settings' ] // Callback.
 		);
 
@@ -237,9 +242,10 @@ class CiviCRM_Groups_Sync_Admin {
 		// Add help text.
 		add_action( 'admin_head-' . $this->settings_page, [ $this, 'admin_head' ], 50 );
 
+		/*
 		// Add scripts and styles.
-		// phpcs:ignore Squiz.Commenting.InlineComment.InvalidEndChar
-		//add_action( 'admin_print_styles-' . $this->settings_page, array( $this, 'admin_css' ) );
+		add_action( 'admin_print_styles-' . $this->settings_page, array( $this, 'admin_css' ) );
+		*/
 
 	}
 
@@ -262,7 +268,7 @@ class CiviCRM_Groups_Sync_Admin {
 
 		// Define subpages.
 		$subpages = [
-			'civicrm_groups_sync_settings',
+			'wpcv_cgi_settings',
 		];
 
 		/**
@@ -271,16 +277,15 @@ class CiviCRM_Groups_Sync_Admin {
 		 * @since 0.1
 		 *
 		 * @param array $subpages The existing list of subpages.
-		 * @return array $subpages The modified list of subpages.
 		 */
-		$subpages = apply_filters( 'civicrm_groups_sync_subpages', $subpages );
+		$subpages = apply_filters( 'wpcv_cgi/subpages', $subpages );
 
 		// This tweaks the Settings subnav menu to show only one menu item.
 		if ( in_array( $plugin_page, $subpages ) ) {
 			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			$plugin_page = 'civicrm_groups_sync_parent';
+			$plugin_page = 'wpcv_cgi_parent';
 			// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-			$submenu_file = 'civicrm_groups_sync_parent';
+			$submenu_file = 'wpcv_cgi_parent';
 		}
 
 	}
@@ -316,15 +321,15 @@ class CiviCRM_Groups_Sync_Admin {
 			$this->settings_page,
 		];
 
-		// Kick out if not our screen.
+		// Bail if not our screen.
 		if ( ! in_array( $screen->id, $pages ) ) {
 			return $screen;
 		}
 
 		// Add a tab - we can add more later.
 		$screen->add_help_tab( [
-			'id'      => 'civicrm_groups_sync',
-			'title'   => __( 'CiviCRM Groups Sync', 'civicrm-groups-sync' ),
+			'id'      => 'wpcv_cgi_settings',
+			'title'   => __( 'Integrate CiviCRM with Groups', 'wpcv-civicrm-groups-integration' ),
 			'content' => $this->admin_help_get(),
 		] );
 
@@ -346,7 +351,7 @@ class CiviCRM_Groups_Sync_Admin {
 		ob_start();
 
 		// Include template.
-		include CIVICRM_GROUPS_SYNC_PATH . 'assets/templates/help/settings-help.php';
+		include WPCV_CGI_PATH . 'assets/templates/help/settings-help.php';
 
 		// Save the output and flush the buffer.
 		$help = ob_get_clean();
@@ -366,14 +371,13 @@ class CiviCRM_Groups_Sync_Admin {
 	public function page_settings() {
 
 		/**
-		 * Set capability but allow overrides.
+		 * Filters the default capability for accessing the settings page.
 		 *
-		 * @since 0.1
+		 * @since 1.0.0
 		 *
-		 * @param str The default capability for access to settings page.
-		 * @return str The modified capability for access to settings page.
+		 * @param str $capability The default capability for access to settings page.
 		 */
-		$capability = apply_filters( 'civicrm_groups_sync_page_settings_cap', 'manage_options' );
+		$capability = apply_filters( 'wpcv_cgi/page_settings/cap', 'manage_options' );
 
 		// Check User permissions.
 		if ( ! current_user_can( $capability ) ) {
@@ -389,12 +393,11 @@ class CiviCRM_Groups_Sync_Admin {
 		 * @since 0.1
 		 *
 		 * @param bool False by default - do not show tabs.
-		 * @return bool Modified flag for whether or not to show tabs.
 		 */
-		$show_tabs = apply_filters( 'civicrm_groups_sync_show_tabs', false );
+		$show_tabs = apply_filters( 'wpcv_cgi/show_tabs', false );
 
 		// Include template.
-		include CIVICRM_GROUPS_SYNC_PATH . 'assets/templates/admin/settings-page.php';
+		include WPCV_CGI_PATH . 'assets/templates/admin/settings-page.php';
 
 	}
 
@@ -416,7 +419,7 @@ class CiviCRM_Groups_Sync_Admin {
 		$this->urls = [];
 
 		// Get admin page URLs.
-		$this->urls['settings'] = menu_page_url( 'civicrm_groups_sync_settings', false );
+		$this->urls['settings'] = menu_page_url( 'wpcv_cgi_settings', false );
 
 		/**
 		 * Filter the list of URLs.
@@ -424,9 +427,8 @@ class CiviCRM_Groups_Sync_Admin {
 		 * @since 0.1
 		 *
 		 * @param array $urls The existing list of URLs.
-		 * @return array $urls The modified list of URLs.
 		 */
-		$this->urls = apply_filters( 'civicrm_groups_sync_page_urls', $this->urls );
+		$this->urls = apply_filters( 'wpcv_cgi/page_urls', $this->urls );
 
 		// --<
 		return $this->urls;
@@ -473,14 +475,13 @@ class CiviCRM_Groups_Sync_Admin {
 		$settings = [];
 
 		/**
-		 * Filter default settings.
+		 * Filters the default settings.
 		 *
 		 * @since 0.1.2
 		 *
 		 * @param array $settings The array of default settings.
-		 * @return array $settings The modified array of default settings.
 		 */
-		$settings = apply_filters( 'civicrm_groups_sync_settings_default', $settings );
+		$settings = apply_filters( 'wpcv_cgi/settings_default', $settings );
 
 		// --<
 		return $settings;
@@ -497,7 +498,7 @@ class CiviCRM_Groups_Sync_Admin {
 	public function settings_save() {
 
 		// Save array as option.
-		return $this->option_set( 'civicrm_groups_sync_settings', $this->settings );
+		return $this->option_set( 'wpcv_cgi_settings', $this->settings );
 
 	}
 
@@ -506,18 +507,13 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param string $setting_name The name of the setting.
+	 * @param string $name The name of the setting.
 	 * @return bool Whether or not the setting exists.
 	 */
-	public function setting_exists( $setting_name = '' ) {
-
-		// Test for empty.
-		if ( $setting_name == '' ) {
-			die( __( 'You must supply a setting to setting_exists()', 'civicrm-groups-sync' ) );
-		}
+	public function setting_exists( $name = '' ) {
 
 		// Get existence of setting in array.
-		return array_key_exists( $setting_name, $this->settings );
+		return array_key_exists( $name, $this->settings );
 
 	}
 
@@ -526,19 +522,14 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param string $setting_name The name of the setting.
+	 * @param string $name The name of the setting.
 	 * @param mixed $default The default value if the setting does not exist.
 	 * @return mixed The setting or the default.
 	 */
-	public function setting_get( $setting_name = '', $default = false ) {
-
-		// Test for empty.
-		if ( $setting_name == '' ) {
-			die( __( 'You must supply a setting to setting_get()', 'civicrm-groups-sync' ) );
-		}
+	public function setting_get( $name = '', $default = false ) {
 
 		// Get setting.
-		return ( array_key_exists( $setting_name, $this->settings ) ) ? $this->settings[ $setting_name ] : $default;
+		return ( array_key_exists( $name, $this->settings ) ) ? $this->settings[ $name ] : $default;
 
 	}
 
@@ -547,18 +538,15 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param string $setting_name The name of the setting.
+	 * @param string $name The name of the setting.
 	 * @param mixed $value The value of the setting.
 	 */
-	public function setting_set( $setting_name = '', $value = '' ) {
-
-		// Test for empty.
-		if ( $setting_name == '' ) {
-			die( __( 'You must supply a setting to setting_set()', 'civicrm-groups-sync' ) );
-		}
+	public function setting_set( $name = '', $value = '' ) {
 
 		// Set setting.
-		$this->settings[ $setting_name ] = $value;
+		if ( ! empty( $name ) ) {
+			$this->settings[ $name ] = $value;
+		}
 
 	}
 
@@ -567,17 +555,14 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param string $setting_name The name of the setting.
+	 * @param string $name The name of the setting.
 	 */
-	public function setting_delete( $setting_name = '' ) {
-
-		// Test for empty.
-		if ( $setting_name == '' ) {
-			die( __( 'You must supply a setting to setting_delete()', 'civicrm-groups-sync' ) );
-		}
+	public function setting_delete( $name = '' ) {
 
 		// Unset setting.
-		unset( $this->settings[ $setting_name ] );
+		if ( isset( $this->settings[ $name ] ) ) {
+			unset( $this->settings[ $name ] );
+		}
 
 	}
 
@@ -588,18 +573,18 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param str $option_name The name of the option.
+	 * @param str $name The name of the option.
 	 * @return bool $exists Whether or not the option exists.
 	 */
-	public function option_exists( $option_name = '' ) {
+	public function option_exists( $name ) {
 
-		// Test for empty.
-		if ( $option_name == '' ) {
-			die( __( 'You must supply an option to option_exists()', 'civicrm-groups-sync' ) );
+		// Empty options cannot exist.
+		if ( empty( $name ) ) {
+			return false;
 		}
 
 		// Test by getting option with unlikely default.
-		if ( $this->option_get( $option_name, 'fenfgehgefdfdjgrkj' ) == 'fenfgehgefdfdjgrkj' ) {
+		if ( $this->option_get( $name, 'fenfgehgefdfdjgrkj' ) == 'fenfgehgefdfdjgrkj' ) {
 			return false;
 		} else {
 			return true;
@@ -612,14 +597,14 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param str $option_name The name of the option.
+	 * @param str $name The name of the option.
 	 * @param str $default The default value of the option if it has no value.
-	 * @return mixed $value the value of the option.
+	 * @return mixed $value The value of the option.
 	 */
-	public function option_get( $option_name = '', $default = false ) {
+	public function option_get( $name, $default = false ) {
 
 		// Get option.
-		$value = get_option( $option_name, $default );
+		$value = get_option( $name, $default );
 
 		// --<
 		return $value;
@@ -631,14 +616,14 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param str $option_name The name of the option.
+	 * @param str $name The name of the option.
 	 * @param mixed $value The value to set the option to.
 	 * @return bool $success True if the value of the option was successfully updated.
 	 */
-	public function option_set( $option_name = '', $value = '' ) {
+	public function option_set( $name, $value = '' ) {
 
 		// Update option.
-		return update_option( $option_name, $value );
+		return update_option( $name, $value );
 
 	}
 
@@ -647,13 +632,13 @@ class CiviCRM_Groups_Sync_Admin {
 	 *
 	 * @since 0.1
 	 *
-	 * @param str $option_name The name of the option.
+	 * @param str $name The name of the option.
 	 * @return bool $success True if the option was successfully deleted.
 	 */
-	public function option_delete( $option_name = '' ) {
+	public function option_delete( $name ) {
 
 		// Delete option.
-		return delete_option( $option_name );
+		return delete_option( $name );
 
 	}
 

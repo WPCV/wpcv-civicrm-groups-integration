@@ -1,17 +1,17 @@
 <?php
 /**
- * Plugin Name: CiviCRM Groups Sync
- * Plugin URI: https://develop.tadpole.cc/plugins/civicrm-groups-sync
- * Description: Keeps Contacts in CiviCRM Groups in sync with WordPress Users in Groups provided by the Groups plugin.
+ * Plugin Name: Integrate CiviCRM with Groups
+ * Plugin URI: https://github.com/WPCV/wpcv-civicrm-groups-integration
+ * GitHub Plugin URI: https://github.com/WPCV/wpcv-civicrm-groups-integration
+ * Description: Integrates CiviCRM Groups with Groups provided by the Groups plugin.
  * Author: Christian Wach
  * Version: 1.0.0a
- * Author URI: http://haystack.co.uk
- * Text Domain: civicrm-groups-sync
+ * Author URI: https://haystack.co.uk
+ * Text Domain: wpcv-civicrm-groups-integration
  * Domain Path: /languages
  * Depends: CiviCRM
  *
- * @package CiviCRM_Groups_Sync
- * @since 0.1
+ * @package WPCV_CGI
  */
 
 // Exit if accessed directly.
@@ -20,25 +20,25 @@ defined( 'ABSPATH' ) || exit;
 
 
 // Set our version here.
-define( 'CIVICRM_GROUPS_SYNC_VERSION', '1.0.0a' );
+define( 'WPCV_CGI_VERSION', '1.0.0a' );
 
 // Store reference to this file.
-if ( ! defined( 'CIVICRM_GROUPS_SYNC_FILE' ) ) {
-	define( 'CIVICRM_GROUPS_SYNC_FILE', __FILE__ );
+if ( ! defined( 'WPCV_CGI_FILE' ) ) {
+	define( 'WPCV_CGI_FILE', __FILE__ );
 }
 
 // Store URL to this plugin's directory.
-if ( ! defined( 'CIVICRM_GROUPS_SYNC_URL' ) ) {
-	define( 'CIVICRM_GROUPS_SYNC_URL', plugin_dir_url( CIVICRM_GROUPS_SYNC_FILE ) );
+if ( ! defined( 'WPCV_CGI_URL' ) ) {
+	define( 'WPCV_CGI_URL', plugin_dir_url( WPCV_CGI_FILE ) );
 }
 // Store PATH to this plugin's directory.
-if ( ! defined( 'CIVICRM_GROUPS_SYNC_PATH' ) ) {
-	define( 'CIVICRM_GROUPS_SYNC_PATH', plugin_dir_path( CIVICRM_GROUPS_SYNC_FILE ) );
+if ( ! defined( 'WPCV_CGI_PATH' ) ) {
+	define( 'WPCV_CGI_PATH', plugin_dir_path( WPCV_CGI_FILE ) );
 }
 
 // Set debug flag.
-if ( ! defined( 'CIVICRM_GROUPS_SYNC_DEBUG' ) ) {
-	define( 'WPCV_TAX_FIELD_SYNC_DEBUG', false );
+if ( ! defined( 'WPCV_CGI_DEBUG' ) ) {
+	define( 'WPCV_CGI_DEBUG', false );
 }
 
 
@@ -50,7 +50,7 @@ if ( ! defined( 'CIVICRM_GROUPS_SYNC_DEBUG' ) ) {
  *
  * @since 0.1
  */
-class CiviCRM_Groups_Sync {
+class WPCV_CGI {
 
 	/**
 	 * Admin utilities object.
@@ -99,7 +99,7 @@ class CiviCRM_Groups_Sync {
 		 *
 		 * @since 0.1
 		 */
-		do_action( 'civicrm_groups_sync_loaded' );
+		do_action( 'wpcv_cgi/loaded' );
 
 	}
 
@@ -109,6 +109,11 @@ class CiviCRM_Groups_Sync {
 	 * @since 0.1.2
 	 */
 	public function dependencies() {
+
+		// Defer to CiviCRM Groups Sync if present.
+		if ( defined( 'CIVICRM_GROUPS_SYNC_VERSION' ) ) {
+			return false;
+		}
 
 		// Init only when CiviCRM is fully installed.
 		if ( ! defined( 'CIVICRM_INSTALLED' ) ) {
@@ -165,9 +170,9 @@ class CiviCRM_Groups_Sync {
 	public function include_files() {
 
 		// Load our class files.
-		require CIVICRM_GROUPS_SYNC_PATH . 'includes/class-admin.php';
-		require CIVICRM_GROUPS_SYNC_PATH . 'includes/class-civicrm.php';
-		require CIVICRM_GROUPS_SYNC_PATH . 'includes/class-wordpress.php';
+		require WPCV_CGI_PATH . 'includes/class-civicrm.php';
+		require WPCV_CGI_PATH . 'includes/class-wordpress.php';
+		require WPCV_CGI_PATH . 'includes/class-admin.php';
 
 	}
 
@@ -179,9 +184,9 @@ class CiviCRM_Groups_Sync {
 	public function setup_objects() {
 
 		// Instantiate objects.
-		$this->admin = new CiviCRM_Groups_Sync_Admin( $this );
-		$this->civicrm = new CiviCRM_Groups_Sync_CiviCRM( $this );
-		$this->wordpress = new CiviCRM_Groups_Sync_WordPress( $this );
+		$this->civicrm = new WPCV_CGI_CiviCRM( $this );
+		$this->wordpress = new WPCV_CGI_WordPress( $this );
+		$this->admin = new WPCV_CGI_Admin( $this );
 
 	}
 
@@ -206,7 +211,7 @@ class CiviCRM_Groups_Sync {
 		// Enable translation.
 		// phpcs:ignore WordPress.WP.DeprecatedParameters.Load_plugin_textdomainParam2Found
 		load_plugin_textdomain(
-			'civicrm-groups-sync', // Unique name.
+			'wpcv-civicrm-groups-integration', // Unique name.
 			false, // Deprecated argument.
 			dirname( plugin_basename( __FILE__ ) ) . '/languages/' // Relative path to files.
 		);
@@ -244,7 +249,7 @@ class CiviCRM_Groups_Sync {
 		}
 
 		// Get path from 'plugins' directory to this plugin.
-		$this_plugin = plugin_basename( CIVICRM_GROUPS_SYNC_FILE );
+		$this_plugin = plugin_basename( WPCV_CGI_FILE );
 
 		// Test if network active.
 		$is_network_active = is_plugin_active_for_network( $this_plugin );
@@ -288,7 +293,7 @@ class CiviCRM_Groups_Sync {
 	public function log_error( $data = [] ) {
 
 		// Skip if not debugging.
-		if ( WPCV_TAX_FIELD_SYNC_DEBUG === false ) {
+		if ( WPCV_CGI_DEBUG === false ) {
 			return;
 		}
 
@@ -316,25 +321,25 @@ class CiviCRM_Groups_Sync {
  *
  * @since 0.1
  *
- * @return object CiviCRM_Groups_Sync The plugin reference.
+ * @return object WPCV_CGI The plugin reference.
  */
-function civicrm_groups_sync() {
+function wpcv_cgi() {
 
 	// Store instance in static variable.
-	static $civicrm_groups_sync = false;
+	static $plugin = false;
 
 	// Maybe return instance.
-	if ( false === $civicrm_groups_sync ) {
-		$civicrm_groups_sync = new CiviCRM_Groups_Sync();
+	if ( false === $plugin ) {
+		$plugin = new WPCV_CGI();
 	}
 
 	// --<
-	return $civicrm_groups_sync;
+	return $plugin;
 
 }
 
 // Initialise plugin when plugins have loaded.
-add_action( 'plugins_loaded', 'civicrm_groups_sync' );
+add_action( 'plugins_loaded', 'wpcv_cgi' );
 
 /*
  * Uninstall uses the 'uninstall.php' method.
@@ -353,7 +358,7 @@ add_action( 'plugins_loaded', 'civicrm_groups_sync' );
  * @param str $file The name of the plugin file.
  * @return array $links The modified links array.
  */
-function civicrm_groups_sync_action_links( $links, $file ) {
+function wpcv_cgi_action_links( $links, $file ) {
 
 	// Add links only when CiviCRM is fully installed.
 	if ( ! defined( 'CIVICRM_INSTALLED' ) || ! CIVICRM_INSTALLED ) {
@@ -371,15 +376,17 @@ function civicrm_groups_sync_action_links( $links, $file ) {
 	}
 
 	// Add settings link.
-	if ( $file == plugin_basename( dirname( __FILE__ ) . '/civicrm-groups-sync.php' ) ) {
+	if ( $file === plugin_basename( dirname( __FILE__ ) . '/wpcv-civicrm-groups-integration.php' ) ) {
 
+		/*
 		// Add settings link if not network activated and not viewing network admin.
-		$link = add_query_arg( [ 'page' => 'civicrm_groups_sync_parent' ], admin_url( 'options-general.php' ) );
-		//$links[] = '<a href="' . esc_url( $link ) . '">' . esc_html__( 'Settings', 'civicrm-groups-sync' ) . '</a>';
+		$link = add_query_arg( [ 'page' => 'wpcv_cgi_parent' ], admin_url( 'options-general.php' ) );
+		$links[] = '<a href="' . esc_url( $link ) . '">' . esc_html__( 'Settings', 'wpcv-civicrm-groups-integration' ) . '</a>';
+		*/
 
 		// Always add Paypal link.
 		$paypal = 'https://www.paypal.me/interactivist';
-		$links[] = '<a href="' . $paypal . '" target="_blank">' . __( 'Donate!', 'civicrm-groups-sync' ) . '</a>';
+		$links[] = '<a href="' . $paypal . '" target="_blank">' . __( 'Donate!', 'wpcv-civicrm-groups-integration' ) . '</a>';
 
 	}
 
@@ -389,4 +396,4 @@ function civicrm_groups_sync_action_links( $links, $file ) {
 }
 
 // Add filter for the above.
-add_filter( 'plugin_action_links', 'civicrm_groups_sync_action_links', 10, 2 );
+add_filter( 'plugin_action_links', 'wpcv_cgi_action_links', 10, 2 );
