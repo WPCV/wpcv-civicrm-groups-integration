@@ -4,9 +4,9 @@
  * Plugin URI: https://github.com/WPCV/wpcv-civicrm-groups-integration
  * GitHub Plugin URI: https://github.com/WPCV/wpcv-civicrm-groups-integration
  * Description: Integrates CiviCRM Groups with Groups provided by the Groups plugin.
- * Author: Christian Wach
+ * Author: WPCV
  * Version: 1.0.0a
- * Author URI: https://haystack.co.uk
+ * Author URI: https://github.com/WPCV
  * Text Domain: wpcv-civicrm-groups-integration
  * Domain Path: /languages
  * Depends: CiviCRM
