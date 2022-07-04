@@ -4,7 +4,7 @@
  * Plugin URI: https://develop.tadpole.cc/plugins/civicrm-groups-sync
  * Description: Keeps Contacts in CiviCRM Groups in sync with WordPress Users in Groups provided by the Groups plugin.
  * Author: Christian Wach
- * Version: 0.2
+ * Version: 1.0.0a
  * Author URI: http://haystack.co.uk
  * Text Domain: civicrm-groups-sync
  * Domain Path: /languages
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 
 // Set our version here.
-define( 'CIVICRM_GROUPS_SYNC_VERSION', '0.2' );
+define( 'CIVICRM_GROUPS_SYNC_VERSION', '1.0.0a' );
 
 // Store reference to this file.
 if ( ! defined( 'CIVICRM_GROUPS_SYNC_FILE' ) ) {
