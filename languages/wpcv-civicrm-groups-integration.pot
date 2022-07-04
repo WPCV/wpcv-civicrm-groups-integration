@@ -1,0 +1,85 @@
+# Copyright (C) 2022 Christian Wach
+# This file is distributed under the same license as the Integrate CiviCRM with Groups plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Integrate CiviCRM with Groups 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wpcv-civicrm-groups-integration\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2022-07-04T15:44:43+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.6.0\n"
+"X-Domain: wpcv-civicrm-groups-integration\n"
+
+#. Plugin Name of the plugin
+msgid "Integrate CiviCRM with Groups"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://github.com/WPCV/wpcv-civicrm-groups-integration"
+msgstr ""
+
+#. Description of the plugin
+msgid "Integrates CiviCRM Groups with Groups provided by the Groups plugin."
+msgstr ""
+
+#. Author of the plugin
+msgid "Christian Wach"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://haystack.co.uk"
+msgstr ""
+
+msgid "Create a CiviCRM Group"
+msgstr ""
+
+msgid "Checking this will create a CiviCRM Group that is linked to this Group. The Group Members will exist in both Groups."
+msgstr ""
+
+#. translators: %s: The URL of the Group.
+msgid "There is <a href=\"%s\">an existing CiviCRM Group</a> that is linked to this Group. The Group Members will exist in both Groups."
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Settings to go here."
+msgstr ""
+
+msgid "Save Changes"
+msgstr ""
+
+msgid "Settings: For further information about using Integrate CiviCRM with Groups, please refer to the readme.txt file that comes with this plugin."
+msgstr ""
+
+msgid "Integrate CiviCRM with Groups: Settings"
+msgstr ""
+
+#. translators: 1: The opening anchor tag, 2: The closing anchor tag.
+msgid "This group is a Synced Group and already has an associated group in WordPress: %1$sGroup Settings%2$s"
+msgstr ""
+
+msgid "Existing Synced Group"
+msgstr ""
+
+msgid "Create Synced Group"
+msgstr ""
+
+msgid "If you are creating a Synced Group, you only need to fill out the \"Title\" field (and optionally the \"Description\" field) above. The Group Type will be set to \"Access Control\" automatically."
+msgstr ""
+
+msgid "Untitled"
+msgstr ""
+
+msgid "Could not add User to Group."
+msgstr ""
+
+msgid "Could not delete User from Group."
+msgstr ""
+
+msgid "Donate!"
+msgstr ""
