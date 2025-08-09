@@ -193,12 +193,10 @@ class WPCV_CGI_Admin {
 		}
 		*/
 
-		/*
 		// Always sync capabilities on plugin upgrade.
 		if ( $this->plugin_version != WPCV_CGI_VERSION ) {
 			$this->plugin->civicrm->permissions->capabilities_sync_queue();
 		}
-		*/
 
 	}
 
