@@ -8,9 +8,7 @@
  */
 
 // Bail if uninstall not called from WordPress.
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit();
-}
+defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 // TODO: This may need to be done for every site in multisite.
 

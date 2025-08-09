@@ -1,23 +1,22 @@
 <?php
 /**
- * Plugin Name: Integrate CiviCRM with Groups
- * Plugin URI: https://github.com/WPCV/wpcv-civicrm-groups-integration
+ * Integrate CiviCRM with Groups
+ *
+ * Plugin Name:       Integrate CiviCRM with Groups
+ * Description:       Integrates CiviCRM Groups with Groups provided by the Groups plugin.
+ * Plugin URI:        https://github.com/WPCV/wpcv-civicrm-groups-integration
  * GitHub Plugin URI: https://github.com/WPCV/wpcv-civicrm-groups-integration
- * Description: Integrates CiviCRM Groups with Groups provided by the Groups plugin.
- * Author: WPCV
- * Version: 1.0.0a
- * Author URI: https://github.com/WPCV
- * Text Domain: wpcv-civicrm-groups-integration
- * Domain Path: /languages
- * Depends: CiviCRM
+ * Version:           1.0.0a
+ * Author:            WPCV
+ * Author URI:        https://github.com/WPCV
+ * Text Domain:       wpcv-civicrm-groups-integration
+ * Domain Path:       /languages
  *
  * @package WPCV_CGI
  */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
-
-
 
 // Set our version here.
 define( 'WPCV_CGI_VERSION', '1.0.0a' );
@@ -31,6 +30,7 @@ if ( ! defined( 'WPCV_CGI_FILE' ) ) {
 if ( ! defined( 'WPCV_CGI_URL' ) ) {
 	define( 'WPCV_CGI_URL', plugin_dir_url( WPCV_CGI_FILE ) );
 }
+
 // Store PATH to this plugin's directory.
 if ( ! defined( 'WPCV_CGI_PATH' ) ) {
 	define( 'WPCV_CGI_PATH', plugin_dir_path( WPCV_CGI_FILE ) );
@@ -40,8 +40,6 @@ if ( ! defined( 'WPCV_CGI_PATH' ) ) {
 if ( ! defined( 'WPCV_CGI_DEBUG' ) ) {
 	define( 'WPCV_CGI_DEBUG', false );
 }
-
-
 
 /**
  * Plugin class.
@@ -57,7 +55,7 @@ class WPCV_CGI {
 	 *
 	 * @since 0.1
 	 * @access public
-	 * @var object $admin The Admin utilities object.
+	 * @var WPCV_CGI_Admin
 	 */
 	public $admin;
 
@@ -66,7 +64,7 @@ class WPCV_CGI {
 	 *
 	 * @since 0.1
 	 * @access public
-	 * @var object $civicrm The CiviCRM utilities object.
+	 * @var WPCV_CGI_CiviCRM
 	 */
 	public $civicrm;
 
@@ -75,7 +73,7 @@ class WPCV_CGI {
 	 *
 	 * @since 0.1
 	 * @access public
-	 * @var object $wordpress The WordPress utilities object.
+	 * @var WPCV_CGI_WordPress
 	 */
 	public $wordpress;
 
@@ -86,13 +84,37 @@ class WPCV_CGI {
 	 */
 	public function __construct() {
 
+		// Always include WP-CLI command.
+		require_once WPCV_CGI_PATH . 'includes/wp-cli/wp-cli-cvgrp.php';
+
+		// Initialise this plugin.
+		add_action( 'plugins_loaded', [ $this, 'initialise' ] );
+
+	}
+
+	/**
+	 * Initialises the plugin.
+	 *
+	 * @since 0.1
+	 */
+	public function initialise() {
+
 		// Bail if dependencies fail.
 		if ( ! $this->dependencies() ) {
 			return;
 		}
 
-		// Initialise this plugin.
-		$this->initialise();
+		// Only do this once.
+		static $done;
+		if ( isset( $done ) && true === $done ) {
+			return;
+		}
+
+		// Bootstrap plugin.
+		add_action( 'init', [ $this, 'enable_translation' ] );
+		$this->include_files();
+		$this->setup_objects();
+		$this->register_hooks();
 
 		/**
 		 * Broadcast that this plugin is now loaded.
@@ -100,6 +122,9 @@ class WPCV_CGI {
 		 * @since 0.1
 		 */
 		do_action( 'wpcv_cgi/loaded' );
+
+		// We're done.
+		$done = true;
 
 	}
 
@@ -116,10 +141,7 @@ class WPCV_CGI {
 		}
 
 		// Init only when CiviCRM is fully installed.
-		if ( ! defined( 'CIVICRM_INSTALLED' ) ) {
-			return false;
-		}
-		if ( ! CIVICRM_INSTALLED ) {
+		if ( ! defined( 'CIVICRM_INSTALLED' ) || ! CIVICRM_INSTALLED ) {
 			return false;
 		}
 
@@ -139,30 +161,6 @@ class WPCV_CGI {
 	}
 
 	/**
-	 * Initialises the plugin.
-	 *
-	 * @since 0.1
-	 */
-	public function initialise() {
-
-		// Only do this once.
-		static $done;
-		if ( isset( $done ) && $done === true ) {
-			return;
-		}
-
-		// Bootstrap plugin.
-		$this->enable_translation();
-		$this->include_files();
-		$this->setup_objects();
-		$this->register_hooks();
-
-		// We're done.
-		$done = true;
-
-	}
-
-	/**
 	 * Includes files.
 	 *
 	 * @since 0.1
@@ -170,9 +168,9 @@ class WPCV_CGI {
 	public function include_files() {
 
 		// Load our class files.
+		require WPCV_CGI_PATH . 'includes/admin/class-admin.php';
 		require WPCV_CGI_PATH . 'includes/class-civicrm.php';
 		require WPCV_CGI_PATH . 'includes/class-wordpress.php';
-		require WPCV_CGI_PATH . 'includes/class-admin.php';
 
 	}
 
@@ -184,9 +182,9 @@ class WPCV_CGI {
 	public function setup_objects() {
 
 		// Instantiate objects.
-		$this->civicrm = new WPCV_CGI_CiviCRM( $this );
+		$this->admin     = new WPCV_CGI_Admin( $this );
+		$this->civicrm   = new WPCV_CGI_CiviCRM( $this );
 		$this->wordpress = new WPCV_CGI_WordPress( $this );
-		$this->admin = new WPCV_CGI_Admin( $this );
 
 	}
 
@@ -197,7 +195,8 @@ class WPCV_CGI {
 	 */
 	public function register_hooks() {
 
-		// If global-scope hooks are needed, add them here.
+		// Add action links.
+		add_filter( 'plugin_action_links', [ $this, 'action_links' ], 10, 2 );
 
 	}
 
@@ -218,7 +217,30 @@ class WPCV_CGI {
 
 	}
 
-	// -------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------
+
+	/**
+	 * Performs plugin activation tasks.
+	 *
+	 * @since 0.3.0
+	 */
+	public function activate() {
+
+	}
+
+	/**
+	 * Performs plugin deactivation tasks.
+	 *
+	 * @since 0.3.0
+	 */
+	public function deactivate() {
+
+		// Remove scheduled hook.
+		if ( ! empty( $this->schedule ) ) {
+			$this->schedule->unschedule();
+		}
+
+	}
 
 	/**
 	 * Checks if this plugin is network activated.
@@ -312,23 +334,84 @@ class WPCV_CGI {
 
 	}
 
+	/**
+	 * Write a message to the log file.
+	 *
+	 * @since 0.1.2
+	 *
+	 * @param string $message The message to write to the log file.
+	 */
+	public function log_message( $message = '' ) {
+
+		// Skip if not debugging.
+		if ( WPCV_CGI_DEBUG === false ) {
+			return;
+		}
+
+		// Write to log file.
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( $message );
+
+	}
+
+	/**
+	 * Adds utility links to settings page.
+	 *
+	 * @since 0.1
+	 * @since 0.3.2 Moved into plugin class.
+	 *
+	 * @param array  $links The existing links array.
+	 * @param string $file The name of the plugin file.
+	 * @return array $links The modified links array.
+	 */
+	public function action_links( $links, $file ) {
+
+		// Bail if not this plugin.
+		if ( plugin_basename( dirname( __FILE__ ) . '/wpcv-civicrm-groups-integration.php' ) !== $file ) {
+			return $links;
+		}
+
+		// Add links only when CiviCRM is fully installed.
+		if ( ! defined( 'CIVICRM_INSTALLED' ) || ! CIVICRM_INSTALLED ) {
+			return $links;
+		}
+
+		// Bail if CiviCRM plugin is not present.
+		if ( ! function_exists( 'civi_wp' ) ) {
+			return $links;
+		}
+
+		// Bail if we don't have the "Groups" plugin.
+		if ( ! defined( 'GROUPS_CORE_VERSION' ) ) {
+			return $links;
+		}
+
+		// Add settings link if not network activated and not viewing network admin.
+		$link    = add_query_arg( [ 'page' => 'cvgrp_settings' ], admin_url( 'admin.php' ) );
+		$links[] = '<a href="' . esc_url( $link ) . '">' . esc_html__( 'Settings', 'wpcv-civicrm-groups-integration' ) . '</a>';
+
+		// Always add Paypal link.
+		$paypal  = 'https://www.paypal.me/interactivist';
+		$links[] = '<a href="' . esc_url( $paypal ) . '" target="_blank">' . __( 'Donate!', 'wpcv-civicrm-groups-integration' ) . '</a>';
+
+		// --<
+		return $links;
+
+	}
+
 }
-
-
 
 /**
  * Utility to get a reference to this plugin.
  *
  * @since 0.1
  *
- * @return object WPCV_CGI The plugin reference.
+ * @return WPCV_CGI $plugin The plugin reference.
  */
 function wpcv_cgi() {
 
-	// Store instance in static variable.
+	// Maybe instantiate plugin.
 	static $plugin = false;
-
-	// Maybe return instance.
 	if ( false === $plugin ) {
 		$plugin = new WPCV_CGI();
 	}
@@ -338,62 +421,17 @@ function wpcv_cgi() {
 
 }
 
-// Initialise plugin when plugins have loaded.
-add_action( 'plugins_loaded', 'wpcv_cgi' );
+// Bootstrap plugin.
+wpcv_cgi();
+
+// Plugin activation.
+register_activation_hook( __FILE__, [ wpcv_cgi(), 'activate' ] );
+
+// Plugin deactivation.
+register_deactivation_hook( __FILE__, [ wpcv_cgi(), 'deactivate' ] );
 
 /*
  * Uninstall uses the 'uninstall.php' method.
  *
  * @see https://codex.wordpress.org/Function_Reference/register_uninstall_hook
  */
-
-
-
-/**
- * Utility to add link to settings page.
- *
- * @since 0.1
- *
- * @param array $links The existing links array.
- * @param str $file The name of the plugin file.
- * @return array $links The modified links array.
- */
-function wpcv_cgi_action_links( $links, $file ) {
-
-	// Add links only when CiviCRM is fully installed.
-	if ( ! defined( 'CIVICRM_INSTALLED' ) || ! CIVICRM_INSTALLED ) {
-		return $links;
-	}
-
-	// Bail if CiviCRM plugin is not present.
-	if ( ! function_exists( 'civi_wp' ) ) {
-		return $links;
-	}
-
-	// Bail if we don't have the "Groups" plugin.
-	if ( ! defined( 'GROUPS_CORE_VERSION' ) ) {
-		return $links;
-	}
-
-	// Add settings link.
-	if ( $file === plugin_basename( dirname( __FILE__ ) . '/wpcv-civicrm-groups-integration.php' ) ) {
-
-		/*
-		// Add settings link if not network activated and not viewing network admin.
-		$link = add_query_arg( [ 'page' => 'wpcv_cgi_parent' ], admin_url( 'options-general.php' ) );
-		$links[] = '<a href="' . esc_url( $link ) . '">' . esc_html__( 'Settings', 'wpcv-civicrm-groups-integration' ) . '</a>';
-		*/
-
-		// Always add Paypal link.
-		$paypal = 'https://www.paypal.me/interactivist';
-		$links[] = '<a href="' . $paypal . '" target="_blank">' . __( 'Donate!', 'wpcv-civicrm-groups-integration' ) . '</a>';
-
-	}
-
-	// --<
-	return $links;
-
-}
-
-// Add filter for the above.
-add_filter( 'plugin_action_links', 'wpcv_cgi_action_links', 10, 2 );

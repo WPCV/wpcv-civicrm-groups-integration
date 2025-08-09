@@ -3,7 +3,7 @@ Contributors: needle, kcristiano
 Donate link: https://www.paypal.me/interactivist
 Tags: civicrm, groups, sync
 Requires at least: 4.9
-Tested up to: 6.0
+Tested up to: 6.8
 Stable tag: 1.0.0a
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,7 @@ If you are using both *BuddyPress* and *Groups* then you will also need [this pl
 
 ### Permissions Sync
 
-If you want to have manual control over syncing permissions from CiviCRM to *Groups*, you can apply [this patch](https://github.com/civicrm/civicrm-wordpress/pull/279) to your CiviCRM install.
+It may be useful to sync the capabilities/permissions using [CiviCRM Permissions Sync](https://develop.tadpole.cc/plugins/civicrm-permissions-sync). Details are in the [README.md file](https://develop.tadpole.cc/plugins/civicrm-permissions-sync/-/blob/master/README.md)
 
 ### Plugin Development
 
@@ -49,13 +49,59 @@ This plugin is in active development. For feature requests and bug reports (or i
 1. Make sure CiviCRM is activated and properly configured
 1. Activate the plugin through the 'Plugins' menu in WordPress
 
+### Setting up synced Groups
+
+#### WordPress Groups
+
+When you add a Group in WordPress, you'll be able to select an option that also creates a Group in CiviCRM. This allows you to update a User in a WordPress Group and it will update that Contact in CiviCRM and add them to the CiviCRM Group.
+
+With the Groups in WordPress, you'll be also be able to assign capabilities or ACLs so that Users in that Groups can access the parts of CiviCRM they can work on.
+
+Tip: Add Users as WordPress using the default User Roles, like Subscriber or Author. Then add them to the appropriate Group to get the ACLs needed to access CiviCRM.
+
+#### CiviCRM Groups
+
+When adding a Group in CiviCRM, there will be an option to also create a Group in WordPress. These Groups are all Access Control Groups, since capabilities can be assigned to the Groups, as referenced above.
+
+### Keeping your Groups in sync
+
+It seems that there can be situations which cause the Groups to get out of sync. To address this, there are three options that you can use:
+
+1. A pair of WP-CLI commands
+1. A WordPress scheduled event
+1. A "Manual Sync" settings page
+
+When using these options, you will need to choose your sync direction depending on whether your CiviCRM Groups or your "Groups" Groups are the "source of truth".
+
+#### WP-CLI commands
+
+Use either `wp cvgrp job sync-to-wp` or `wp cvgrp job sync-to-civicrm` to sync all Groups each time the job runs.
+
+#### WordPress scheduled event
+
+The "Groups Sync" settings page enables you to set up a scheduled event to keep your Groups in sync.
+
+#### "Manual Sync" page
+
+Use the utilities on this page to sync your Groups immediately.
+
 
 
 == Changelog ==
 
-= 0.2 =
+= 0.3.2 =
 
-* Plugin rewritten
+* Maintenance release
+
+= 0.3.1 =
+
+* Support Group sync during User creation via CiviCRM Profile
+
+= 0.3.0 =
+
+* Introduce WP-CLI commands
+* Introduce WordPress scheduled events
+* Add Manual Sync page
 
 = 0.1.2 =
 

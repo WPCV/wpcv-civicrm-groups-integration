@@ -47,7 +47,7 @@ class WPCV_CGI_CiviCRM_Permissions {
 	public function __construct( $civicrm ) {
 
 		// Store reference to plugin.
-		$this->plugin = $civicrm->plugin;
+		$this->plugin  = $civicrm->plugin;
 		$this->civicrm = $civicrm;
 
 		// Initialise when CiviCRM class is loaded.
@@ -231,7 +231,7 @@ class WPCV_CGI_CiviCRM_Permissions {
 		$permissions = get_option( 'wpcv_cgi_stored_permissions', 'false' );
 
 		// If no option exists, cast return as array.
-		if ( $permissions === 'false' ) {
+		if ( 'false' === $permissions ) {
 			$permissions = [];
 		}
 
