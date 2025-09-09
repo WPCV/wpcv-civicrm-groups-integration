@@ -208,7 +208,6 @@ class WPCV_CGI_CiviCRM {
 
 			// Add static content.
 			$form->assign( 'wpcv_cgi_edit_label', __( 'Existing Synced Group', 'wpcv-civicrm-groups-integration' ) );
-			$form->assign( 'wpcv_cgi_edit_url', $group_url );
 			$form->assign( 'wpcv_cgi_edit_description', $description );
 
 			// Insert template block into the page.
@@ -222,7 +221,6 @@ class WPCV_CGI_CiviCRM {
 			$form->add( 'checkbox', 'wpcv_cgi_create', __( 'Create Synced Group', 'wpcv-civicrm-groups-integration' ) );
 
 			// Add static content.
-			$form->assign( 'wpcv_cgi_create_label', __( 'Create Synced Group', 'wpcv-civicrm-groups-integration' ) );
 			$form->assign( 'wpcv_cgi_create_description', __( 'If you are creating a Synced Group, you only need to fill out the "Title" field (and optionally the "Description" field) above. The Group Type will be set to "Access Control" automatically.', 'wpcv-civicrm-groups-integration' ) );
 
 			// Insert template block into the page.

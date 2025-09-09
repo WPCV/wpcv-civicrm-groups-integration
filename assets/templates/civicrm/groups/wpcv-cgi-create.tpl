@@ -1,7 +1,7 @@
 {* template block that contains the new field *}
 <table>
   <tr class="wpcv_cgi_create_block">
-    <td class="label"><label for="wpcv_cgi_create">{$wpcv_cgi_create_label}</label></td>
+    <td class="label"><label for="wpcv_cgi_create">{$form.wpcv_cgi_create.label}</label></td>
     <td>{$form.wpcv_cgi_create.html} <span class="description">{$wpcv_cgi_create_description}</span></td>
   </tr>
 </table>
